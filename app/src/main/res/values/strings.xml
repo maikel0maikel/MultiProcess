@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">MultiProcess</string>
+    <string name="jump_txt">jump</string>
+    <string name="set_login_info">set</string>
+    <string name="get_login_info">get</string>
+</resources>
