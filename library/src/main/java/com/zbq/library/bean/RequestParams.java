@@ -1,10 +1,13 @@
 package com.zbq.library.bean;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * create by maikel
  * 请求参数实体
  */
-public class RequestParams {
+public class RequestParams implements Parcelable {
     /**参数类类型如java.lang.String***/
     private String paramClzName;
     /**参数值****/
@@ -27,6 +30,23 @@ public class RequestParams {
         this.paramValue = paramValue;
     }
 
+    protected RequestParams(Parcel in) {
+        paramClzName = in.readString();
+        paramValue = in.readString();
+    }
+
+    public static final Creator<RequestParams> CREATOR = new Creator<RequestParams>() {
+        @Override
+        public RequestParams createFromParcel(Parcel in) {
+            return new RequestParams(in);
+        }
+
+        @Override
+        public RequestParams[] newArray(int size) {
+            return new RequestParams[size];
+        }
+    };
+
     public String getParamClzName() {
         return paramClzName;
     }
@@ -41,5 +61,16 @@ public class RequestParams {
 
     public void setParamValue(String paramValue) {
         this.paramValue = paramValue;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeString(paramClzName);
+        parcel.writeString(paramValue);
     }
 }

@@ -1,12 +1,16 @@
 package com.zbq.library.bean;
 
 
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.os.Process;
+
 /**
  * create by maikel
  * 请求实体类，模拟http请求
  *
  */
-public class RequestBean {
+public class Request implements Parcelable {
     /**請求類型******/
     private int type;
     /**类名**/
@@ -16,11 +20,12 @@ public class RequestBean {
     /**所需參數***/
     private RequestParams[] requestParams;
 
+    private int mPid;
     /**
      * 无参构造函数
       */
-    public RequestBean(){
-
+    public Request(){
+        mPid = Process.myPid();
     }
 
     /**
@@ -30,12 +35,43 @@ public class RequestBean {
      * @param methodName 方法名
      * @param params 方法参数
      */
-    public RequestBean(int type, String className,String methodName,RequestParams...params){
+    public Request(int type, String className, String methodName, RequestParams...params){
         this.type = type;
         this.className = className;
         this.methodName = methodName;
         this.requestParams = params;
+        this.mPid = Process.myPid();
     }
+
+    protected Request(Parcel in) {
+        type = in.readInt();
+        className = in.readString();
+        methodName = in.readString();
+        ClassLoader classLoader = Request.class.getClassLoader();
+        Parcelable[] parcelables = in.readParcelableArray(classLoader);
+        if (parcelables == null) {
+            requestParams = null;
+        } else {
+            int length = parcelables.length;
+            requestParams = new RequestParams[length];
+            for (int i = 0; i < length; ++i) {
+                requestParams[i] = (RequestParams) parcelables[i];
+            }
+        }
+        mPid = in.readInt();
+    }
+
+    public static final Creator<Request> CREATOR = new Creator<Request>() {
+        @Override
+        public Request createFromParcel(Parcel in) {
+            return new Request(in);
+        }
+
+        @Override
+        public Request[] newArray(int size) {
+            return new Request[size];
+        }
+    };
 
     /**
      * 获取请求类型
@@ -99,5 +135,23 @@ public class RequestBean {
      */
     public void setRequestParams(RequestParams[] requestParams) {
         this.requestParams = requestParams;
+    }
+
+    public int getPid() {
+        return mPid;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeInt(type);
+        parcel.writeString(className);
+        parcel.writeString(methodName);
+        parcel.writeParcelableArray(requestParams, i);
+        parcel.writeInt(mPid);
     }
 }

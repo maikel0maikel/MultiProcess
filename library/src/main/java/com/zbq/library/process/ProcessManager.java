@@ -7,12 +7,13 @@ import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.os.RemoteException;
 
-import com.zbq.library.IProcess;
 import com.zbq.library.anotion.ClassId;
-import com.zbq.library.bean.RequestBean;
+import com.zbq.library.bean.Request;
 import com.zbq.library.bean.RequestParams;
+import com.zbq.library.bean.Response;
 import com.zbq.library.cash.CacheManager;
 import com.zbq.library.constant.Constants;
+import com.zbq.library.internal.IProcessService;
 import com.zbq.library.service.DataService;
 import com.zbq.library.utils.JsonUtils;
 import com.zbq.library.utils.StringUtils;
@@ -33,7 +34,7 @@ public class ProcessManager implements IProcessManager {
     /**
      * 远程代理接口
      */
-    private IProcess process;
+    private IProcessService processService;
 
     public static IProcessManager getInstance() {
         if (processManager == null) {
@@ -131,8 +132,8 @@ public class ProcessManager implements IProcessManager {
      * @param <T>
      * @return
      */
-    private <T> String sendRequest(int type, Class<T> clz, Method method, Object[] params) {
-        RequestBean requestBean = new RequestBean();
+    private <T> Response sendRequest(int type, Class<T> clz, Method method, Object[] params) {
+        Request request = new Request();
         if (params != null && params.length > 0) {//建造参数列表
             RequestParams[] requestParams = new RequestParams[params.length];
             int index = 0;
@@ -142,21 +143,20 @@ public class ProcessManager implements IProcessManager {
                 RequestParams requestParam = new RequestParams(paramClzName, paramValue);
                 requestParams[index++] = requestParam;
             }
-            requestBean.setRequestParams(requestParams);
+            request.setRequestParams(requestParams);
         }
         ClassId classId = clz.getAnnotation(ClassId.class);
         if (classId != null) {
-            requestBean.setClassName(classId.value());
+            request.setClassName(classId.value());
         } else {
-            requestBean.setClassName(clz.getName());
+            request.setClassName(clz.getName());
         }
         String methodName = method==null?"":method.getName();
-        requestBean.setMethodName(methodName);
-        requestBean.setType(type);
-        String requestJson = JsonUtils.fromString(requestBean);
-        if (process != null) {
+        request.setMethodName(methodName);
+        request.setType(type);
+        if (processService != null) {
             try {
-                return process.sendMessage(requestJson);
+                return processService.send(request);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -168,13 +168,13 @@ public class ProcessManager implements IProcessManager {
     ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            process = IProcess.Stub.asInterface(iBinder);
+            processService = IProcessService.Stub.asInterface(iBinder);
 
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            process = null;
+            processService = null;
         }
     };
 
@@ -185,12 +185,11 @@ public class ProcessManager implements IProcessManager {
         }
         @Override
         public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
-            if (process != null) {
-                String respose = sendRequest(Constants.TYPE_METHOD, clz, method, objects);
-                if (StringUtils.isEmpty(respose)) return null;
+            if (processService != null) {
+                Response respose = sendRequest(Constants.TYPE_METHOD, clz, method, objects);
                 Class info = method.getReturnType();
-                Object responseBean = JsonUtils.fromObject(respose, info);
-                return responseBean;
+//                Object responseBean = JsonUtils.fromObject(respose.getResponse(), info);
+                return respose==null?null:respose.getResponse();
             }
             return null;
         }

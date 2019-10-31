@@ -1,10 +1,9 @@
-// IProcess.aidl
+// Callback.aidl
 package com.zbq.library;
 
 // Declare any non-default types here with import statements
 
-interface IProcess {
+interface Callback {
 
-    String sendMessage(String requst);
-
+ void callback(String message);
 }

@@ -1,14 +1,14 @@
 package com.zbq.library;
 
-import com.zbq.library.bean.LoginBean;
+
+import android.util.Log;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServiceManager implements IServiceManager{
-
-    private LoginBean loginBean;
-
+    private static final String TAG = ServiceManager.class.getSimpleName();
+    private ConcurrentHashMap<Integer,OnAiuiMessageListener> mAiuiListeners = new ConcurrentHashMap<>();
     private static IServiceManager instance  ;
-
-
     public static IServiceManager getInstance(){
         if (instance == null){
             synchronized (ServiceManager.class){
@@ -19,16 +19,18 @@ public class ServiceManager implements IServiceManager{
         }
         return instance;
     }
-
     @Override
-    public LoginBean getLoginInfo() {
-
-        return loginBean;
+    public void sendAiuiMessage(String json) {
+        Log.d(TAG,"sendAiuiMessage----"+json);
     }
 
     @Override
-    public void setLoginInfo(LoginBean loginInfo) {
-        loginBean = loginInfo;
+    public void setOnAiuiMessageListener(OnAiuiMessageListener listener,int pid) {
+        mAiuiListeners.put(pid,listener);
     }
 
+    @Override
+    public OnAiuiMessageListener getListener(int pid) {
+        return mAiuiListeners.get(pid);
+    }
 }
