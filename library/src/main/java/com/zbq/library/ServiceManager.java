@@ -1,36 +1,18 @@
 package com.zbq.library;
 
 
-import android.util.Log;
+public abstract class ServiceManager implements IServiceManager{
 
-import java.util.concurrent.ConcurrentHashMap;
 
-public class ServiceManager implements IServiceManager{
-    private static final String TAG = ServiceManager.class.getSimpleName();
-    private ConcurrentHashMap<Integer,OnAiuiMessageListener> mAiuiListeners = new ConcurrentHashMap<>();
-    private static IServiceManager instance  ;
     public static IServiceManager getInstance(){
-        if (instance == null){
-            synchronized (ServiceManager.class){
-                if (instance == null){
-                    instance = new ServiceManager();
-                }
-            }
-        }
-        return instance;
+        return ServiceManagerAdapter.getInstance();
     }
     @Override
     public void sendAiuiMessage(String json) {
-        Log.d(TAG,"sendAiuiMessage----"+json);
+        onClientSendMessage(json);
     }
 
-    @Override
-    public void setOnAiuiMessageListener(OnAiuiMessageListener listener,int pid) {
-        mAiuiListeners.put(pid,listener);
-    }
 
-    @Override
-    public OnAiuiMessageListener getListener(int pid) {
-        return mAiuiListeners.get(pid);
-    }
+    abstract void onClientSendMessage(String json);
+
 }

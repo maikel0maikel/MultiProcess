@@ -28,15 +28,15 @@ public class SecondActivity extends Activity {
 
     public void setInfo(View view) {
         serviceManager = ProcessManager.getInstance().getInstance(IServiceManager.class);
-        serviceManager.setOnAiuiMessageListener(new MyOnAiuiListener(), Process.myPid());
+        //serviceManager.setOnAiuiMessageListener(new MyOnAiuiListener(), Process.myPid());
     }
 
 
     public void getInfo(View view) {
         serviceManager = ProcessManager.getInstance().getInstance(IServiceManager.class);
-        OnAiuiMessageListener listener = serviceManager.getListener(Process.myPid());
-        Log.d("SecondActivity",""+listener);
-        if (listener!=null)listener.onMessage("me call me");
+//        OnAiuiMessageListener listener = serviceManager.getListener(Process.myPid());
+//        Log.d("SecondActivity",""+listener);
+//        if (listener!=null)listener.onMessage("me call me");
     }
 
 }

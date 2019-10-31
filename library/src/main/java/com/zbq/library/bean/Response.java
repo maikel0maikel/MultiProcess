@@ -19,7 +19,7 @@ public class Response implements Parcelable {
     protected Response(Parcel in) {
         clazz = in.readString();
         try {
-            response = JsonUtils.fromObject(in.readString(), Class.forName(clazz));
+            response = JsonUtils.parse(in.readString(), Class.forName(clazz));
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -64,6 +64,6 @@ public class Response implements Parcelable {
     @Override
     public void writeToParcel(Parcel parcel, int i) {
         parcel.writeString(clazz);
-        parcel.writeString(JsonUtils.fromString(response));
+        parcel.writeString(JsonUtils.toJson(response));
     }
 }

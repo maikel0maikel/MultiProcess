@@ -1,5 +1,7 @@
 package com.zbq.library.utils;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -12,47 +14,44 @@ import java.util.List;
 public class JsonUtils {
     private static final String TAG = "JsonUtils";
 
-   private static Gson gson = new Gson();
-    private JsonUtils(){}
-    /**
-     * 把Json字符串变成实例
-      * @param json 字符串
-     * @param clz 要序列化为实例的类类型
-     * @param <T> 泛型
-     * @return 返回泛型实例
-     */
-   public static <T> T fromObject(String json,Class<T> clz){
-       if (StringUtils.isEmpty(json)) return null;
-       T t = null;
-       try {
-          t = gson.fromJson(json,clz);
-       }catch (Exception e){
-
-       }
-
-       return t;
-   }
+    private JsonUtils() {
+    }
+    private static final Gson gson = new Gson();
+    public static <T> T parse(String jsonData, Class<T> type)  {
+        if (jsonData == null || jsonData.length() == 0){
+            return null;
+        }
+        T result = null;
+        try {
+            result = gson.fromJson(jsonData, type);
+        }catch (Exception e){
+            Log.e(TAG,  "解析失败：" + jsonData);
+        }
+        return result;
+    }
 
     /**
-     *  将Json数组解析成相应的映射对象列表
-     * @param json json字符串
-     * @param clz 類類型
-     * @param <T> 泛型
-     * @return 返回T列表
+     * 将Json数组解析成相应的映射对象列表
+     *
+     * @param jsonData
+     * @param cls
+     * @param <T>
+     * @return
      */
-   public static  <T>List<T> fromObjectArray(String json,Class<T> clz){
-       if (StringUtils.isEmpty(json)) return null;
-       List<T> arrayTs = new ArrayList<>();
-       try {
-           JsonArray array = new JsonParser().parse(json).getAsJsonArray();
-           for (JsonElement element:array){
-               arrayTs.add(gson.fromJson(element,clz));
-           }
-       }catch (Exception e) {
+    public static <T> List<T> parseArray(String jsonData, Class<T> cls) {
+        List<T> list = new ArrayList<>();
+        try {
+            JsonArray array = new JsonParser().parse(jsonData).getAsJsonArray();
+            for (final JsonElement elem : array) {
+                list.add(gson.fromJson(elem, cls));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "解析失败：" + jsonData);
+        }
 
-       }
-       return arrayTs;
-   }
+        return list;
+    }
+
     /**
      * 将Json数组解析成相应的映射对象列表
      *
@@ -61,19 +60,18 @@ public class JsonUtils {
      * @return
      */
     public static <T> List<T> parseJsonList(String jsonData) {
-        Gson gson = new Gson();
         List<T> result = gson.fromJson(jsonData, new TypeToken<List<T>>() {
         }.getType());
         return result;
     }
 
     /**
-     * 將對象轉爲json字符串
-     * @param object 對象實例
-     * @return json字符串
+     * 将一个对象转为json字符串
+     * @param object Object实例对象
+     * @return 返回json字符串
      */
-    public static String fromString(Object object){
-        return gson.toJson(object);
+    public static String toJson(Object object) {
+        String json = gson.toJson(object);
+        return json;
     }
-
 }

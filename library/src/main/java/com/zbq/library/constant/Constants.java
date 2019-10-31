@@ -1,5 +1,6 @@
 package com.zbq.library.constant;
 
+
 public class Constants {
     /**方法**/
     public static final int TYPE_METHOD = 2;
@@ -9,4 +10,6 @@ public class Constants {
     public static final int TYPE_OBJECT = 3;
 
     private Constants(){}
+
+
 }

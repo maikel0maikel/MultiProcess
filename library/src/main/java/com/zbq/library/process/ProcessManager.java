@@ -5,7 +5,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
+import android.os.Process;
 import android.os.RemoteException;
+import android.text.TextUtils;
 
 import com.zbq.library.anotion.ClassId;
 import com.zbq.library.bean.Request;
@@ -13,28 +15,46 @@ import com.zbq.library.bean.RequestParams;
 import com.zbq.library.bean.Response;
 import com.zbq.library.cash.CacheManager;
 import com.zbq.library.constant.Constants;
+import com.zbq.library.internal.IProcessCallback;
 import com.zbq.library.internal.IProcessService;
 import com.zbq.library.service.DataService;
 import com.zbq.library.utils.JsonUtils;
-import com.zbq.library.utils.StringUtils;
+import com.zbq.library.utils.ProcessUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * create by maikel
  * 多进程管理实现类
  */
 public class ProcessManager implements IProcessManager {
-
+    private static final String TAG = ProcessManager.class.getSimpleName();
     private static IProcessManager processManager;
 
     private CacheManager cacheManager = CacheManager.getInstance();
-    /**
-     * 远程代理接口
-     */
-    private IProcessService processService;
+
+    private final ConcurrentHashMap<Integer, IProcessService> mProcessServices = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Integer, ProcessServiceConnection> mProcessServiceConnections = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Integer, Boolean> mBindings = new ConcurrentHashMap<>();
+
+    private final ConcurrentHashMap<Integer, Boolean> mBounds = new ConcurrentHashMap<>();
+
+    private OnProcessConnectListener mListener;
+
+    private IProcessCallback processCallback = new IProcessCallback.Stub() {
+        @Override
+        public Response callback(Request request) throws RemoteException {
+            return ProcessUtils.getResponse(request);
+        }
+
+    };
 
     public static IProcessManager getInstance() {
         if (processManager == null) {
@@ -49,6 +69,7 @@ public class ProcessManager implements IProcessManager {
 
     /**
      * 注册主要是把该类缓存与缓存该类下的所有方法
+     *
      * @param serviceClz 接口类
      */
     @Override
@@ -72,6 +93,7 @@ public class ProcessManager implements IProcessManager {
 
     /**
      * 连接
+     *
      * @param context 上下文
      */
     @Override
@@ -81,7 +103,8 @@ public class ProcessManager implements IProcessManager {
 
     /**
      * 连接
-     * @param context 上下文
+     *
+     * @param context     上下文
      * @param packageName 包名
      */
     @Override
@@ -91,27 +114,48 @@ public class ProcessManager implements IProcessManager {
 
     /**
      * 绑定服务
-     * @param context 上下文
+     *
+     * @param context     上下文
      * @param packageName 包名
-     * @param clz 服务类
+     * @param service     服务类
      * @return 绑定成功true，否则false
      */
-    private boolean bindService(Context context, String packageName, Class<? extends DataService> clz) {
-        if (StringUtils.isEmpty(packageName)) {
-            Intent intent = new Intent(context, clz);
-            return context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
-        } else {
-            Intent intent = new Intent();
-            intent.setPackage(packageName);
-            intent.setAction(clz.getName());
-            return context.bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+    private boolean bindService(Context context, String packageName, Class<? extends DataService> service) {
+
+        ProcessServiceConnection connection;
+        synchronized (this) {
+            if (getBound(service)) {
+                return false;
+            }
+            Boolean binding = mBindings.get(service);
+            if (binding != null && binding) {
+                return false;
+            }
+            mBindings.put(Process.myPid(), true);
+            connection = new ProcessServiceConnection(service);
+            mProcessServiceConnections.put(Process.myPid(), connection);
         }
+        Intent intent;
+        if (TextUtils.isEmpty(packageName)) {
+            intent = new Intent(context, service);
+        } else {
+            intent = new Intent();
+            intent.setClassName(packageName, service.getName());
+        }
+        return context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+
+    }
+
+    private boolean getBound(Class<? extends DataService> service) {
+        Boolean bound = mBounds.get(service);
+        return bound != null && bound;
     }
 
     /**
      * 采用动态代理
      * 获取T单例实体，得到的实例是远程服务的实体
-     * @param clz 服务类类型
+     *
+     * @param clz    服务类类型
      * @param params 参数数组
      * @param <T>
      * @return
@@ -123,37 +167,45 @@ public class ProcessManager implements IProcessManager {
         return t;
     }
 
+    @Override
+    public void disconnect(Context context) {
+        synchronized (this) {
+            Boolean bound = mBounds.get(Process.myPid());
+            if (bound != null && bound) {
+                ProcessServiceConnection connection = mProcessServiceConnections.get(Process.myPid());
+                if (connection != null) {
+                    context.unbindService(connection);
+                }
+                mBounds.put(Process.myPid(), false);
+            }
+        }
+    }
+
+
+    @Override
+    public boolean isConnected() {
+        Boolean isBound = mBounds.get(Process.myPid());
+        return isBound == null ? false : isBound;
+    }
+
+    @Override
+    public void setOnProcessConnectListener(OnProcessConnectListener listener) {
+        mListener = listener;
+    }
+
     /**
      * 向服务端发送请求
-     * @param type 请求类型
-     * @param clz 请求类类型
+     *
+     * @param type   请求类型
+     * @param clz    请求类类型
      * @param method 方法
      * @param params 参数列表
      * @param <T>
      * @return
      */
     private <T> Response sendRequest(int type, Class<T> clz, Method method, Object[] params) {
-        Request request = new Request();
-        if (params != null && params.length > 0) {//建造参数列表
-            RequestParams[] requestParams = new RequestParams[params.length];
-            int index = 0;
-            for (Object object : params) {
-                String paramClzName = object.getClass().getName();
-                String paramValue = JsonUtils.fromString(object);
-                RequestParams requestParam = new RequestParams(paramClzName, paramValue);
-                requestParams[index++] = requestParam;
-            }
-            request.setRequestParams(requestParams);
-        }
-        ClassId classId = clz.getAnnotation(ClassId.class);
-        if (classId != null) {
-            request.setClassName(classId.value());
-        } else {
-            request.setClassName(clz.getName());
-        }
-        String methodName = method==null?"":method.getName();
-        request.setMethodName(methodName);
-        request.setType(type);
+        Request request = ProcessUtils.buildRequest(type,clz,method,params);
+        IProcessService processService = mProcessServices.get(Process.myPid());
         if (processService != null) {
             try {
                 return processService.send(request);
@@ -165,31 +217,58 @@ public class ProcessManager implements IProcessManager {
     }
 
 
-    ServiceConnection serviceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            processService = IProcessService.Stub.asInterface(iBinder);
+    private class ProcessServiceConnection implements ServiceConnection {
 
+        private Class<? extends DataService> mClass;
+
+        ProcessServiceConnection(Class<? extends DataService> service) {
+            mClass = service;
         }
 
-        @Override
-        public void onServiceDisconnected(ComponentName componentName) {
-            processService = null;
+        public void onServiceConnected(ComponentName className, IBinder service) {
+            synchronized (ProcessManager.this) {
+                mBounds.put(Process.myPid(), true);
+                mBindings.put(Process.myPid(), false);
+                IProcessService processService = IProcessService.Stub.asInterface(service);
+                mProcessServices.put(Process.myPid(), processService);
+                try {
+                    processService.register(processCallback, Process.myPid());
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (mListener != null) {
+                mListener.onConnected(mClass);
+            }
         }
-    };
+
+        public void onServiceDisconnected(ComponentName className) {
+            synchronized (ProcessManager.this) {
+                mProcessServices.remove(mClass);
+                mBounds.put(Process.myPid(), false);
+                mBindings.put(Process.myPid(), false);
+            }
+            if (mListener != null) {
+                mListener.onDisconnected(mClass);
+            }
+        }
+    }
 
     private class ProxyInstanceHandler implements InvocationHandler {
         private Class<?> clz;
-        public ProxyInstanceHandler(Class<?> clz){
+
+        public ProxyInstanceHandler(Class<?> clz) {
             this.clz = clz;
         }
+
         @Override
         public Object invoke(Object o, Method method, Object[] objects) throws Throwable {
+            IProcessService processService = mProcessServices.get(Process.myPid());
             if (processService != null) {
                 Response respose = sendRequest(Constants.TYPE_METHOD, clz, method, objects);
                 Class info = method.getReturnType();
 //                Object responseBean = JsonUtils.fromObject(respose.getResponse(), info);
-                return respose==null?null:respose.getResponse();
+                return respose == null ? null : respose.getResponse();
             }
             return null;
         }
