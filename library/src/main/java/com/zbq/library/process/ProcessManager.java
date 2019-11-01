@@ -16,7 +16,7 @@ import com.zbq.library.cash.CacheManager;
 import com.zbq.library.constant.Constants;
 import com.zbq.library.internal.IProcessCallback;
 import com.zbq.library.internal.IProcessService;
-import com.zbq.library.service.DataService;
+import com.zbq.library.service.ProcessService;
 import com.zbq.library.utils.ProcessUtils;
 
 import java.lang.reflect.InvocationHandler;
@@ -95,7 +95,7 @@ public class ProcessManager implements IProcessManager {
      */
     @Override
     public void connect(Context context) {
-        bindService(context, null, DataService.class);
+        bindService(context, null, ProcessService.class);
     }
 
     /**
@@ -106,7 +106,7 @@ public class ProcessManager implements IProcessManager {
      */
     @Override
     public void connect(Context context, String packageName) {
-        bindService(context, packageName, DataService.class);
+        bindService(context, packageName, ProcessService.class);
     }
 
     /**
@@ -117,7 +117,7 @@ public class ProcessManager implements IProcessManager {
      * @param service     服务类
      * @return 绑定成功true，否则false
      */
-    private boolean bindService(Context context, String packageName, Class<? extends DataService> service) {
+    private boolean bindService(Context context, String packageName, Class<? extends ProcessService> service) {
 
         ProcessServiceConnection connection;
         synchronized (this) {
@@ -143,7 +143,7 @@ public class ProcessManager implements IProcessManager {
 
     }
 
-    private boolean getBound(Class<? extends DataService> service) {
+    private boolean getBound(Class<? extends ProcessService> service) {
         Boolean bound = mBounds.get(service);
         return bound != null && bound;
     }
@@ -216,9 +216,9 @@ public class ProcessManager implements IProcessManager {
 
     private class ProcessServiceConnection implements ServiceConnection {
 
-        private Class<? extends DataService> mClass;
+        private Class<? extends ProcessService> mClass;
 
-        ProcessServiceConnection(Class<? extends DataService> service) {
+        ProcessServiceConnection(Class<? extends ProcessService> service) {
             mClass = service;
         }
 

@@ -12,7 +12,7 @@ import com.zbq.library.process.ClientManagerAdapter;
 import com.zbq.library.process.IClientManager;
 import com.zbq.library.process.OnProcessConnectListener;
 import com.zbq.library.process.ProcessManager;
-import com.zbq.library.service.DataService;
+import com.zbq.library.service.ProcessService;
 import com.zbq.library.utils.JsonUtils;
 
 
@@ -39,13 +39,13 @@ public class MainActivity extends AppCompatActivity implements OnProcessConnectL
 
 
     @Override
-    public void onConnected(Class<? extends DataService> service) {
+    public void onConnected(Class<? extends ProcessService> service) {
         Log.d(TAG,"onConnected --->"+service.getName());
         serviceManager = ProcessManager.getInstance().getInstance(IServiceManager.class);
     }
 
     @Override
-    public void onDisconnected(Class<? extends DataService> service) {
+    public void onDisconnected(Class<? extends ProcessService> service) {
         Log.d(TAG,"onConnected --->"+service.getName());
         serviceManager = null;
     }
