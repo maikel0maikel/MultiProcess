@@ -1,7 +1,9 @@
 package com.zbq.library.service;
 
 
+import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 
 import com.zbq.library.ServiceManagerAdapter;
 import com.zbq.library.bean.Request;
@@ -9,6 +11,8 @@ import com.zbq.library.bean.Response;
 import com.zbq.library.internal.IProcessCallback;
 import com.zbq.library.internal.IProcessService;
 import com.zbq.library.utils.ProcessUtils;
+
+import static android.content.ContentValues.TAG;
 
 
 public class ProcessServiceManager extends IProcessService.Stub {
@@ -32,11 +36,22 @@ public class ProcessServiceManager extends IProcessService.Stub {
     @Override
     public void register(IProcessCallback callback, int pid) throws RemoteException {
         ServiceManagerAdapter.getInstance().registerCallback(pid,callback);
+        callback.asBinder().linkToDeath(new ClientDeath(pid),0);
     }
 
     @Override
     public Response send(Request request) throws RemoteException {
       return ProcessUtils.getResponse(request);
     }
-
+    class ClientDeath implements IBinder.DeathRecipient {
+        private int mClientPid;
+        ClientDeath(int pid){
+            mClientPid = pid;
+        }
+        @Override
+        public void binderDied() {
+            Log.e(TAG,"binderDied client is death---->mClientPid = "+mClientPid);
+            ServiceManagerAdapter.getInstance().unRegisterCallback(mClientPid);
+        }
+    }
 }

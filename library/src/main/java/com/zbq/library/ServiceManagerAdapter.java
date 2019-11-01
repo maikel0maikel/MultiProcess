@@ -35,6 +35,8 @@ public class ServiceManagerAdapter extends ServiceManager{
     }
 
 
+
+
     public interface OnClientMessageListener{
         void onMessage(String json);
     }
@@ -47,6 +49,9 @@ public class ServiceManagerAdapter extends ServiceManager{
         mCallbacks.put(pid,callback);
     }
 
+    public void unRegisterCallback(int pid) {
+        mCallbacks.remove(pid);
+    }
     /**
      * 采用动态代理
      * 获取T单例实体，得到的实例是远程服务的实体
