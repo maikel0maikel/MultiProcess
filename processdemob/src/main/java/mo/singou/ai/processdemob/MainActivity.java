@@ -6,13 +6,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 
-import com.zbq.library.IServiceManager;
-import com.zbq.library.bean.Email;
-import com.zbq.library.process.ClientManagerAdapter;
-import com.zbq.library.process.IClientManager;
+import com.zbq.library.api.service.IServiceManager;
+import com.zbq.library.model.Email;
+import com.zbq.library.model.LoginBean;
+import com.zbq.library.api.client.IClientManager;
 import com.zbq.library.process.OnProcessConnectListener;
 import com.zbq.library.process.ProcessManager;
-import com.zbq.library.service.ProcessService;
 import com.zbq.library.utils.JsonUtils;
 
 
@@ -34,19 +33,19 @@ public class MainActivity extends AppCompatActivity implements OnProcessConnectL
     }
 
     public void connect(View view) {
-        ProcessManager.getInstance().connect(this,"mo.singou.ai.processdemoa");
+        ProcessManager.getInstance().connect(this,"mo.singou.ai.processdemoa","mo.singou.ai.processdemoa.service.ProcessService");
     }
 
 
     @Override
-    public void onConnected(Class<? extends ProcessService> service) {
-        Log.d(TAG,"onConnected --->"+service.getName());
+    public void onConnected(String clzName) {
+        Log.d(TAG,"onConnected --->"+clzName);
         serviceManager = ProcessManager.getInstance().getInstance(IServiceManager.class);
     }
 
     @Override
-    public void onDisconnected(Class<? extends ProcessService> service) {
-        Log.d(TAG,"onConnected --->"+service.getName());
+    public void onDisconnected(String clzName) {
+        Log.d(TAG,"onConnected --->"+clzName);
         serviceManager = null;
     }
 
@@ -64,5 +63,13 @@ public class MainActivity extends AppCompatActivity implements OnProcessConnectL
 
     public void disconnect(View view) {
         ProcessManager.getInstance().disconnect(this);
+    }
+
+    public void getLoginInfo(View view) {
+        long time = System.currentTimeMillis();
+        Log.e("zbq","begin:"+time);
+        LoginBean loginBean = serviceManager.getLoginInfo();
+        Log.e("zbq","end:"+System.currentTimeMillis()+",wastTime:"+(System.currentTimeMillis()-time));
+        Log.e("zbq","result:"+loginBean.toString());
     }
 }

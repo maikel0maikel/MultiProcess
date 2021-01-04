@@ -1,6 +1,6 @@
-package com.zbq.library.process;
+package mo.singou.ai.processdemob;
 
-public class ClientManagerAdapter extends ClientManager{
+public class ClientManagerAdapter extends ClientManager {
 
     private static ClientManagerAdapter clientManager;
     private OnRemoteMessageListener mListener;
@@ -23,6 +23,11 @@ public class ClientManagerAdapter extends ClientManager{
 
     public void setOnRemoteMessageListener(OnRemoteMessageListener listener){
         mListener = listener;
+    }
+
+    @Override
+    public void notify(int y) {
+
     }
 
     public interface OnRemoteMessageListener{

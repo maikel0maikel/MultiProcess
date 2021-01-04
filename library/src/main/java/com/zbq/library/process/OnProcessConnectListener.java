@@ -1,12 +1,11 @@
 package com.zbq.library.process;
 
 
-import com.zbq.library.service.ProcessService;
 
 public interface OnProcessConnectListener {
 
-    void onConnected(Class<? extends ProcessService> service);
+    void onConnected(String clzName);
 
 
-    void onDisconnected(Class<? extends ProcessService> service);
+    void onDisconnected(String clzName);
 }

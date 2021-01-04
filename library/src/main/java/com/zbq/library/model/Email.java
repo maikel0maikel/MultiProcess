@@ -1,4 +1,4 @@
-package com.zbq.library.bean;
+package com.zbq.library.model;
 
 
 import android.os.Process;

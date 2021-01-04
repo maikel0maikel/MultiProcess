@@ -1,6 +1,8 @@
-package com.zbq.library.process;
+package mo.singou.ai.processdemob;
 
-public  abstract class ClientManager implements IClientManager{
+import com.zbq.library.api.client.IClientManager;
+
+public  abstract class ClientManager implements IClientManager {
     public static IClientManager getInstance(){
         return ClientManagerAdapter.getInstance();
     }

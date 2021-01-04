@@ -1,4 +1,4 @@
-package com.zbq.library.service;
+package mo.singou.ai.processdemoa.service;
 
 import android.app.Service;
 import android.content.Intent;

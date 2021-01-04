@@ -2,15 +2,10 @@ package com.zbq.multiprocess;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.os.Process;
 import android.support.annotation.Nullable;
-import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
-import com.zbq.library.IServiceManager;
-import com.zbq.library.OnAiuiMessageListener;
-import com.zbq.library.bean.LoginBean;
+import com.zbq.library.api.service.IServiceManager;
 import com.zbq.library.process.ProcessManager;
 
 public class SecondActivity extends Activity {

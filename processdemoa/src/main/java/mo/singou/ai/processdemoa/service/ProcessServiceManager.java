@@ -1,28 +1,25 @@
-package com.zbq.library.service;
+package mo.singou.ai.processdemoa.service;
 
 
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.util.Log;
 
-import com.zbq.library.ServiceManagerAdapter;
-import com.zbq.library.bean.Request;
-import com.zbq.library.bean.Response;
+import com.zbq.library.model.Request;
+import com.zbq.library.model.Response;
 import com.zbq.library.internal.IProcessCallback;
 import com.zbq.library.internal.IProcessService;
 import com.zbq.library.utils.ProcessUtils;
 
 import static android.content.ContentValues.TAG;
 
-
 public class ProcessServiceManager extends IProcessService.Stub {
 
-    private static IProcessService.Stub process;
+    private static Stub process;
 
     private ProcessServiceManager() {
     }
 
-    static IProcessService.Stub getProcess() {
+    static Stub getProcess() {
         if (process == null) {
             synchronized (ProcessServiceManager.class) {
                 if (process == null) {
@@ -43,7 +40,7 @@ public class ProcessServiceManager extends IProcessService.Stub {
     public Response send(Request request) throws RemoteException {
       return ProcessUtils.getResponse(request);
     }
-    class ClientDeath implements IBinder.DeathRecipient {
+    class ClientDeath implements DeathRecipient {
         private int mClientPid;
         ClientDeath(int pid){
             mClientPid = pid;

@@ -10,20 +10,18 @@ import android.os.RemoteException;
 import android.text.TextUtils;
 
 import com.zbq.library.anotion.ClassId;
-import com.zbq.library.bean.Request;
-import com.zbq.library.bean.Response;
+import com.zbq.library.model.Request;
+import com.zbq.library.model.Response;
 import com.zbq.library.cash.CacheManager;
 import com.zbq.library.constant.Constants;
 import com.zbq.library.internal.IProcessCallback;
 import com.zbq.library.internal.IProcessService;
-import com.zbq.library.service.ProcessService;
 import com.zbq.library.utils.ProcessUtils;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.ConcurrentHashMap;
-
 
 /**
  * create by maikel
@@ -39,7 +37,7 @@ public class ProcessManager implements IProcessManager {
 
     private final ConcurrentHashMap<Integer, ProcessServiceConnection> mProcessServiceConnections = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<Integer, Boolean> mBindings = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Boolean> mBindings = new ConcurrentHashMap<>();
 
     private final ConcurrentHashMap<Integer, Boolean> mBounds = new ConcurrentHashMap<>();
 
@@ -85,17 +83,6 @@ public class ProcessManager implements IProcessManager {
             cacheManager.cacheClass(serviceClz.getName(), serviceClz);
         }
 
-
-    }
-
-    /**
-     * 连接
-     *
-     * @param context 上下文
-     */
-    @Override
-    public void connect(Context context) {
-        bindService(context, null, ProcessService.class);
     }
 
     /**
@@ -105,8 +92,8 @@ public class ProcessManager implements IProcessManager {
      * @param packageName 包名
      */
     @Override
-    public void connect(Context context, String packageName) {
-        bindService(context, packageName, ProcessService.class);
+    public void connect(Context context, String packageName, String clzName) {
+        bindService(context, packageName, clzName);
     }
 
     /**
@@ -117,34 +104,35 @@ public class ProcessManager implements IProcessManager {
      * @param service     服务类
      * @return 绑定成功true，否则false
      */
-    private boolean bindService(Context context, String packageName, Class<? extends ProcessService> service) {
+    private boolean bindService(Context context, String packageName, String clzName) {
 
         ProcessServiceConnection connection;
         synchronized (this) {
-            if (getBound(service)) {
+            if (getBound()) {
                 return false;
             }
-            Boolean binding = mBindings.get(service);
+            Boolean binding = mBindings.get(clzName);
             if (binding != null && binding) {
                 return false;
             }
-            mBindings.put(Process.myPid(), true);
-            connection = new ProcessServiceConnection(service);
+            //mBindings.put(Process.myPid(), true);
+            connection = new ProcessServiceConnection(clzName);
             mProcessServiceConnections.put(Process.myPid(), connection);
         }
-        Intent intent;
-        if (TextUtils.isEmpty(packageName)) {
-            intent = new Intent(context, service);
-        } else {
-            intent = new Intent();
-            intent.setClassName(packageName, service.getName());
+
+        if (TextUtils.isEmpty(packageName) || TextUtils.isEmpty(clzName)) {
+            return false;
         }
+        Intent intent;
+        intent = new Intent();
+        intent.setComponent(new ComponentName(packageName, clzName));
+
         return context.bindService(intent, connection, Context.BIND_AUTO_CREATE);
 
     }
 
-    private boolean getBound(Class<? extends ProcessService> service) {
-        Boolean bound = mBounds.get(service);
+    private boolean getBound() {
+        Boolean bound = mBounds.get(Process.myPid());
         return bound != null && bound;
     }
 
@@ -178,7 +166,6 @@ public class ProcessManager implements IProcessManager {
         }
     }
 
-
     @Override
     public boolean isConnected() {
         Boolean isBound = mBounds.get(Process.myPid());
@@ -201,7 +188,7 @@ public class ProcessManager implements IProcessManager {
      * @return
      */
     private <T> Response sendRequest(int type, Class<T> clz, Method method, Object[] params) {
-        Request request = ProcessUtils.buildRequest(type,clz,method,params);
+        Request request = ProcessUtils.buildRequest(type, clz, method, params);
         IProcessService processService = mProcessServices.get(Process.myPid());
         if (processService != null) {
             try {
@@ -213,19 +200,18 @@ public class ProcessManager implements IProcessManager {
         return null;
     }
 
-
     private class ProcessServiceConnection implements ServiceConnection {
 
-        private Class<? extends ProcessService> mClass;
+        private String mClass;
 
-        ProcessServiceConnection(Class<? extends ProcessService> service) {
-            mClass = service;
+        ProcessServiceConnection(String clzName) {
+            mClass = clzName;
         }
 
         public void onServiceConnected(ComponentName className, IBinder service) {
             synchronized (ProcessManager.this) {
                 mBounds.put(Process.myPid(), true);
-                mBindings.put(Process.myPid(), false);
+                mBindings.put(mClass, false);
                 IProcessService processService = IProcessService.Stub.asInterface(service);
                 mProcessServices.put(Process.myPid(), processService);
                 try {
@@ -243,7 +229,7 @@ public class ProcessManager implements IProcessManager {
             synchronized (ProcessManager.this) {
                 mProcessServices.remove(mClass);
                 mBounds.put(Process.myPid(), false);
-                mBindings.put(Process.myPid(), false);
+                mBindings.put(mClass, false);
             }
             if (mListener != null) {
                 mListener.onDisconnected(mClass);

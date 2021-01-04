@@ -9,8 +9,8 @@ import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.zbq.library.bean.Request;
-import com.zbq.library.bean.Response;
+import com.zbq.library.model.Request;
+import com.zbq.library.model.Response;
 
 
 public interface IProcessService extends IInterface {

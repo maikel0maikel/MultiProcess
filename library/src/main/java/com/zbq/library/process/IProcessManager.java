@@ -13,18 +13,13 @@ public interface IProcessManager {
      */
     void regist(Class<?> serviceClz);
 
-    /**
-     * 绑定服务进行连接
-     * @param context 上下文
-     */
-    void connect(Context context);
 
     /**
      * 绑定服务进行连接
      * @param context 上下文
      * @param packageName 包名
      */
-    void connect(Context context, String packageName);
+    void connect(Context context, String packageName,String clzName);
 
     /**
      * 获取单例

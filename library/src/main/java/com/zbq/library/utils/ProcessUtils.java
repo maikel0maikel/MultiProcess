@@ -1,9 +1,9 @@
 package com.zbq.library.utils;
 
 import com.zbq.library.anotion.ClassId;
-import com.zbq.library.bean.Request;
-import com.zbq.library.bean.RequestParams;
-import com.zbq.library.bean.Response;
+import com.zbq.library.model.Request;
+import com.zbq.library.model.RequestParams;
+import com.zbq.library.model.Response;
 import com.zbq.library.cash.CacheManager;
 import com.zbq.library.constant.Constants;
 

@@ -5,9 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 
-import com.zbq.library.IServiceManager;
-import com.zbq.library.ServiceManager;
-import com.zbq.library.bean.LoginBean;
+import com.zbq.library.api.service.IServiceManager;
 import com.zbq.library.process.ProcessManager;
 
 public class MainActivity extends AppCompatActivity {
