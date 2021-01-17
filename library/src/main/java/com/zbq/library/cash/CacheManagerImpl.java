@@ -1,5 +1,6 @@
 package com.zbq.library.cash;
 
+import com.zbq.library.model.RequestParams;
 import com.zbq.library.utils.StringUtils;
 
 import java.lang.reflect.Method;
@@ -57,10 +58,22 @@ public class CacheManagerImpl implements ICacheManager {
             Method[] methods = clz.getMethods();
             HashMap<String, Method> methodHashMap = methodMap.get(clz);
             if (methodHashMap == null) methodHashMap = new HashMap<>();
+            StringBuilder builder = new StringBuilder();
             for (Method method : methods) {
                 //methodMap.putIfAbsent(clz,new HashMap<String, Method>());
                 //HashMap<String,Method> methodHashMap = methodMap.get(clz);
-                methodHashMap.put(method.getName(), method);
+                builder.setLength(0);
+                builder.append(method.getName()).append("(");
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                if (parameterTypes!=null&&parameterTypes.length>0){
+                    builder.append(parameterTypes[0].getName());
+                    for (int i=1;i<parameterTypes.length;i++){
+                        builder.append(",").append(parameterTypes[i].getName());
+                    }
+                }
+                builder.append(")");
+                methodHashMap.put(builder.toString(), method);
+                builder.setLength(0);
             }
             methodMap.put(clz, methodHashMap);
         }
@@ -95,16 +108,26 @@ public class CacheManagerImpl implements ICacheManager {
      * @param methodName 方法名
      * @return 方法
      */
-    public Method getMethod(String clasName, String methodName) {
+    public Method getMethod(String clasName, String methodName, RequestParams[] parameters) {
         if (methodName != null) {
             //methodMap.putIfAbsent(getClass(clasName),new HashMap<String, Method>());
             HashMap<String, Method> methodHashMap = methodMap.get(getClass(clasName));
             if (methodHashMap == null) {
                 Class<?> clazz = getClass(clasName);
                 cacheMethod(clazz);
-                return getMethod(clasName, methodName);
+                return getMethod(clasName, methodName,parameters);
             }
-            Method method = methodHashMap.get(methodName);
+            StringBuilder sb = new StringBuilder(methodName);
+            sb.append("(");
+            if (parameters!=null&&parameters.length>0){
+                sb.append(parameters[0].getParamClzName());
+                for (int i=1;i<parameters.length;i++){
+                    sb.append(",").append(parameters[i].getParamClzName());
+                }
+
+            }
+            sb.append(")");
+            Method method = methodHashMap.get(sb.toString());
             if (method != null) return method;
         }
         return null;

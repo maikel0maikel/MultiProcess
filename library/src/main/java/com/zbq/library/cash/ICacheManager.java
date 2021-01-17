@@ -1,5 +1,7 @@
 package com.zbq.library.cash;
 
+import com.zbq.library.model.RequestParams;
+
 import java.lang.reflect.Method;
 
 /**
@@ -34,7 +36,7 @@ public interface ICacheManager {
      * @param methodName 方法名
      * @return 方法
      */
-    Method getMethod(String clasName,String methodName);
+    Method getMethod(String clasName, String methodName, RequestParams[] requestParams);
 
     /**
      * 根据键值获取对象实例

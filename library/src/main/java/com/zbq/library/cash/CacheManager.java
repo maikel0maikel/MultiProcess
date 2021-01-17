@@ -1,5 +1,7 @@
 package com.zbq.library.cash;
 
+import com.zbq.library.model.RequestParams;
+
 import java.lang.reflect.Method;
 
 /**
@@ -63,8 +65,8 @@ public class CacheManager {
      * @param methodName 方法名
      * @return 方法
      */
-    public Method getMethod(String clasName,String methodName){
-        return cacheManager.getMethod(clasName,methodName);
+    public Method getMethod(String clasName, String methodName, RequestParams[] requestParams){
+        return cacheManager.getMethod(clasName,methodName,requestParams);
     }
 
     /**

@@ -32,17 +32,17 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'com.google.code.gson:gson:2.8.5'
 }
-apply plugin: 'maven'
-
-uploadArchives {
-    repositories.mavenDeployer {
-        def mavenRepositoryPath = file(getProperty('aar.ipc'))
-        repository(url: "file://${mavenRepositoryPath.absolutePath}")
-
-        pom.project {
-            groupId "com.maikel" //groupId:artifactId:version
-            artifactId "ipc" //LibA
-            version "1.0.0"
-        }
-    }
-}
+//apply plugin: 'maven'
+//
+//uploadArchives {
+//    repositories.mavenDeployer {
+//        def mavenRepositoryPath = file(getProperty('aar.ipc'))
+//        repository(url: "file://${mavenRepositoryPath.absolutePath}")
+//
+//        pom.project {
+//            groupId "com.maikel" //groupId:artifactId:version
+//            artifactId "ipc" //LibA
+//            version "1.0.0"
+//        }
+//    }
+//}

@@ -23,7 +23,7 @@ public class ProcessUtils {
         switch (request.getType()) {
             case Constants.TYPE_INSTANCE:
                 RequestParams[] params = request.getRequestParams();
-                Method method = CacheManager.getInstance().getMethod(request.getClassName(),"getInstance");
+                Method method = CacheManager.getInstance().getMethod(request.getClassName(),"getInstance",params);
                 try {
                     Object iServiceManager =  method.invoke(null,makeObjects(params));
                     CacheManager.getInstance().cacheObject(request.getClassName(),iServiceManager);
@@ -35,8 +35,9 @@ public class ProcessUtils {
                 break;
             case Constants.TYPE_METHOD:
                 Object serviceManager = CacheManager.getInstance().getObject(request.getClassName());
-                Method methodInvok = CacheManager.getInstance().getMethod(request.getClassName(),request.getMethodName());
                 Object[] parames = makeObjects(request.getRequestParams());
+                Method methodInvok = CacheManager.getInstance().getMethod(request.getClassName(),request.getMethodName(),request.getRequestParams());
+
                 try {
                     Object loginInfo = methodInvok.invoke(serviceManager, parames);
                     if (loginInfo == null){
